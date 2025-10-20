@@ -8,6 +8,7 @@ fn main() -> Result<()> {
     if args.enable_logging {
         env_logger::init();
     }
+
     busy::run_busy_loop(args)?;
 
     Ok(())
