@@ -5,6 +5,10 @@ edition = "2024"
 description = "An application to make you look busy at work."
 license = "Unlicense"
 
+[[bin]]
+name = "bz"
+path = "src/main.rs"
+
 [dependencies]
 anyhow = "1.0"
 enigo = "0.6"
