@@ -9,5 +9,3 @@ license = "Unlicense"
 anyhow = "1.0"
 enigo = "0.6"
 clap = { version = "4.5", features = ["derive"] }
-kurbo = "0.12"
-rand = "0.9"
