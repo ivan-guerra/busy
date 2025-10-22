@@ -6,13 +6,25 @@ on:
       - "v*"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   build:
-    name: Build for Windows
+    name: Build for ${{ matrix.target }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-pc-windows-gnu
+            artifact_name: bz.exe
+            zip_name: bz-x86_64-pc-windows-gnu.zip
+          - target: x86_64-unknown-linux-gnu
+            artifact_name: bz
+            zip_name: bz-x86_64-unknown-linux-gnu.zip
 
     steps:
       - name: Checkout code
@@ -25,34 +37,42 @@ jobs:
         run: cargo install cross --git https://github.com/cross-rs/cross
 
       - name: Build with cross
-        run: cross build --release --target x86_64-pc-windows-gnu
+        run: cross build --release --target ${{ matrix.target }}
 
       - name: Package binary
         run: |
-          cd target/x86_64-pc-windows-gnu/release
-          zip bz-x86_64-pc-windows-gnu.zip bz.exe
-          mv bz-x86_64-pc-windows-gnu.zip ${{ github.workspace }}
+          cd target/${{ matrix.target }}/release
+          zip ${{ matrix.zip_name }} ${{ matrix.artifact_name }}
+          mv ${{ matrix.zip_name }} ${{ github.workspace }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: bz-windows
-          path: bz-x86_64-pc-windows-gnu.zip
+          name: ${{ matrix.target }}
+          path: ${{ matrix.zip_name }}
 
   release:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifact
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          find artifacts -name "*.zip" -exec cp {} release/ \;
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: artifacts/**/*
+          files: release/*
           draft: false
           prerelease: false
         env:
